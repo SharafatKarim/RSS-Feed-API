@@ -2,6 +2,10 @@
 
 Lightweight Express.js API that fetches, parses, and normalises RSS/Atom feeds into a consistent JSON schema. Also discovers feed URLs from any website.
 
+> To test the API, use the following site, (`/docs` won't work),
+>
+> - <https://linkerine.netlify.app/>
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -54,17 +58,20 @@ curl "http://localhost:3001/discover?url=https://blog.sharafat.xyz/"
 ## Deploy to Netlify
 
 1. Install [Netlify CLI](https://docs.netlify.com/cli/get-started/):
+
    ```bash
    npm install netlify-cli -g
    ```
 
 2. Initialise and deploy:
+
    ```bash
    netlify init   # follow prompts — build command: pnpm build, publish dir: public
    netlify deploy --prod
    ```
 
 3. Set environment variables in the Netlify dashboard or via CLI:
+
    ```bash
    netlify env:set CORS_ALLOWLIST "https://linkerine.app"
    ```
