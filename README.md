@@ -16,36 +16,37 @@ All feed routes are also available under the `/api/` prefix (e.g. `/api/feed`).
 
 ## Setup
 
-\`\`\`bash
+```bash
 cp .env.example .env   # then edit .env
 pnpm install
-\`\`\`
+```
 
 **.env**
-\`\`\`
+
+```
 PORT=3001
 CORS_ALLOWLIST=http://localhost:3000,https://linkerine.app
-\`\`\`
+```
 
 Set `CORS_ALLOWLIST=*` to allow all origins (not recommended for production).
 
 ## Usage
 
-\`\`\`bash
+```bash
 # Development (hot-reload)
 pnpm dev
 
 # Production
 pnpm build
 pnpm start
-\`\`\`
+```
 
 ## Examples
 
-\`\`\`bash
+```bash
 # Parse a feed
 curl "http://localhost:3001/feed?url=https://blog.sharafat.xyz/index.xml"
 
 # Discover feeds on a site
 curl "http://localhost:3001/discover?url=https://blog.sharafat.xyz/"
-\`\`\`
+```
