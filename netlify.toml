@@ -3,7 +3,7 @@
   publish = "public"
 
 [functions]
-  external_node_modules = ["express"]
+  directory = "dist/netlify/functions"
   node_bundler = "esbuild"
 
 # Rewrite all /api/* and top-level routes to the function

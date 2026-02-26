@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
+const FETCH_TIMEOUT_MS = parseInt(process.env.FETCH_TIMEOUT_MS ?? '8000', 10);
+
 // MIME types that indicate a feed
 const FEED_TYPES = new Set([
     'application/rss+xml',
@@ -36,7 +38,7 @@ interface DiscoveredFeed {
  * Extract <link rel="alternate"> feed tags from HTML.
  * Avoids a full HTML parser dependency; the patterns are predictable enough for regex.
  */
-function extractFeedLinks(html: string, baseUrl: string): DiscoveredFeed[] {
+export function extractFeedLinks(html: string, baseUrl: string): DiscoveredFeed[] {
     const results: DiscoveredFeed[] = [];
     // Match all <link ...> tags (self-closing or not, case-insensitive)
     const linkTagRe = /<link([^>]+)>/gi;
@@ -87,7 +89,7 @@ function toAbsolute(href: string, base: string): string {
  * Falls back to a GET for servers that don't support HEAD.
  */
 async function probeFeed(url: string): Promise<boolean> {
-    const signal = AbortSignal.timeout(5000);
+    const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
     try {
         const res = await fetch(url, { method: 'HEAD', signal });
         if (res.ok) {
@@ -98,7 +100,7 @@ async function probeFeed(url: string): Promise<boolean> {
     try {
         const res = await fetch(url, {
             method: 'GET',
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
             headers: { Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml' },
         });
         if (!res.ok) return false;
@@ -188,7 +190,7 @@ router.get('/discover', async (req: Request, res: Response): Promise<void> => {
                 'User-Agent': 'Linkerine/1.0 (Feed Discovery; +https://linkerine.netlify.app)',
                 Accept: 'text/html,application/xhtml+xml',
             },
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
 
         if (!response.ok) {

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { XMLParser } from 'fast-xml-parser';
+import { extractFeedLinks } from './discover';
 
 const router = Router();
 
@@ -64,6 +65,8 @@ const xmlParser = new XMLParser({
     cdataPropName: '__cdata',
 });
 
+const FETCH_TIMEOUT_MS = parseInt(process.env.FETCH_TIMEOUT_MS ?? '8000', 10);
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function extractText(node: unknown): string {
@@ -102,7 +105,7 @@ function extractLink(item: Record<string, unknown>): string {
 
 // ── GET /api/feed?url=<feedUrl> ──────────────────────────────────────────────
 
-router.get('/feed', async (req: Request, res: Response): Promise<void> => {
+async function fetchAndParseFeed(req: Request, res: Response): Promise<void> {
     // Strip accidental surrounding quotes (e.g. "%22https://...%22" from some clients)
     const url = typeof req.query['url'] === 'string'
         ? req.query['url'].replace(/^["']+|["']+$/g, '').trim()
@@ -120,7 +123,7 @@ router.get('/feed', async (req: Request, res: Response): Promise<void> => {
                 'User-Agent': 'Linkerine/1.0 (RSS Reader Context; +https://linkerine.netlify.app)',
                 Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
             },
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
 
         if (!response.ok) {
@@ -131,6 +134,23 @@ router.get('/feed', async (req: Request, res: Response): Promise<void> => {
         }
 
         const xmlText = await response.text();
+
+        // ── Auto-detect HTML → run discovery and re-fetch the real feed ──
+        const contentType = response.headers.get('content-type') ?? '';
+        const isHtml = contentType.includes('text/html') || xmlText.trimStart().startsWith('<!');
+        if (isHtml) {
+            const discovered = extractFeedLinks(xmlText, url);
+            if (discovered.length === 0) {
+                res.status(422).json({
+                    error: 'No RSS/Atom feed found on that page. Try passing the feed URL directly, or use /discover first.',
+                });
+                return;
+            }
+            // Transparently re-fetch using the first discovered feed URL
+            req.query['url'] = discovered[0].url;
+            await fetchAndParseFeed(req, res);
+            return;
+        }
         const parsed = xmlParser.parse(xmlText) as Record<string, unknown>;
 
         // ── Normalise RSS vs Atom ─────────────────────────────────────────
@@ -183,6 +203,8 @@ router.get('/feed', async (req: Request, res: Response): Promise<void> => {
         const status = message.includes('timed out') || message.includes('abort') ? 504 : 500;
         res.status(status).json({ error: message });
     }
-});
+}
+
+router.get('/feed', fetchAndParseFeed);
 
 export default router;
