@@ -50,3 +50,24 @@ curl "http://localhost:3001/feed?url=https://blog.sharafat.xyz/index.xml"
 # Discover feeds on a site
 curl "http://localhost:3001/discover?url=https://blog.sharafat.xyz/"
 ```
+
+## Deploy to Netlify
+
+1. Install [Netlify CLI](https://docs.netlify.com/cli/get-started/):
+   ```bash
+   npm install netlify-cli -g
+   ```
+
+2. Initialise and deploy:
+   ```bash
+   netlify init   # follow prompts — build command: pnpm build, publish dir: public
+   netlify deploy --prod
+   ```
+
+3. Set environment variables in the Netlify dashboard or via CLI:
+   ```bash
+   netlify env:set CORS_ALLOWLIST "https://linkerine.app"
+   ```
+
+After deploy all routes are available at `https://<your-site>.netlify.app/`
+(e.g. `/feed`, `/discover`, `/docs`).

@@ -1,0 +1,38 @@
+[build]
+  command = "pnpm build"
+  publish = "public"
+
+[functions]
+  external_node_modules = ["express"]
+  node_bundler = "esbuild"
+
+# Rewrite all /api/* and top-level routes to the function
+[[redirects]]
+  force = true
+  from = "/api/*"
+  status = 200
+  to = "/.netlify/functions/api/:splat"
+
+[[redirects]]
+  force = true
+  from = "/feed"
+  status = 200
+  to = "/.netlify/functions/api/feed"
+
+[[redirects]]
+  force = true
+  from = "/discover"
+  status = 200
+  to = "/.netlify/functions/api/discover"
+
+[[redirects]]
+  force = true
+  from = "/health"
+  status = 200
+  to = "/.netlify/functions/api/health"
+
+[[redirects]]
+  force = true
+  from = "/docs*"
+  status = 200
+  to = "/.netlify/functions/api/docs:splat"
